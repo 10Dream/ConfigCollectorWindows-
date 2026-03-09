@@ -19,7 +19,7 @@ const CHANNELS_PATH: &str = "config/channels.txt";
 const OUTPUT_DIR: &str = "output";
 const LOG_FILE: &str = "logs/app.log";
 const HISTORY_PATH: &str = "output/sent_history.json";
-const DEFAULT_PROTOCOLS: [&str; 12] = [
+const DEFAULT_PROTOCOLS: [&str; 27] = [
     "vmess",
     "vless",
     "trojan",
@@ -29,17 +29,77 @@ const DEFAULT_PROTOCOLS: [&str; 12] = [
     "hysteria",
     "hysteria2",
     "hy2",
-    "warp",
+    "juicity",
+    "snell",
+    "anytls",
+    "ssh",
     "wireguard",
     "wg",
+    "warp",
+    "socks",
+    "socks4",
+    "socks5",
+    "tg",
+    "dns",
+    "nm-dns",
+    "nm-vless",
+    "slipnet-enc",
+    "slipnet",
+    "slipstream",
+    "dnstt",
 ];
 
 fn main() {
     let _ = eframe::run_native(
         "جمع‌آوری کانفیگ تلگرام",
         eframe::NativeOptions::default(),
-        Box::new(|_cc| Ok(Box::new(AppState::bootstrap()))),
+        Box::new(|cc| {
+            configure_persian_font(&cc.egui_ctx);
+            Ok(Box::new(AppState::bootstrap()))
+        }),
     );
+}
+
+fn configure_persian_font(ctx: &egui::Context) {
+    let mut fonts = egui::FontDefinitions::default();
+
+    if let Some(font_bytes) = load_persian_font_bytes() {
+        fonts.font_data.insert(
+            "persian_font".to_owned(),
+            egui::FontData::from_owned(font_bytes).into(),
+        );
+
+        fonts
+            .families
+            .entry(egui::FontFamily::Proportional)
+            .or_default()
+            .insert(0, "persian_font".to_owned());
+        fonts
+            .families
+            .entry(egui::FontFamily::Monospace)
+            .or_default()
+            .push("persian_font".to_owned());
+    }
+
+    ctx.set_fonts(fonts);
+}
+
+fn load_persian_font_bytes() -> Option<Vec<u8>> {
+    let candidates = [
+        r"C:\Windows\Fonts\tahoma.ttf",
+        r"C:\Windows\Fonts\arial.ttf",
+        r"C:\Windows\Fonts\segoeui.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/noto/NotoNaskhArabic-Regular.ttf",
+    ];
+
+    for path in candidates {
+        if let Ok(bytes) = fs::read(path) {
+            return Some(bytes);
+        }
+    }
+
+    None
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -597,7 +657,7 @@ fn build_client(config: &AppConfig) -> Result<Client> {
 }
 
 fn build_protocol_regex() -> Result<Regex> {
-    Regex::new(r#"(?i)(vmess|vless|trojan|ss|ssr|tuic|hysteria2|hysteria|hy2|warp|wireguard|wg)://[^\s<>'"]+"#)
+    Regex::new(r#"(?i)(vmess|vless|trojan|ssr?|tuic|hysteria2?|hy2|juicity|snell|anytls|ssh|wireguard|wg|warp|socks(?:4|5)?|tg|dns|nm-dns|nm-vless|slipnet-enc|slipnet|slipstream|dnstt)://[^\s<>'"]+"#)
         .context("regex")
 }
 
